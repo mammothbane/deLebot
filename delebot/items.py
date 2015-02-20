@@ -10,6 +10,8 @@ import scrapy
 class LuaClass(scrapy.Item):
     name = scrapy.Field()
     ancestor = scrapy.Field()
+    glob = scrapy.Field()
+    glob_accessor = scrapy.Field()
     notes = scrapy.Field()
     methods = scrapy.Field()
 
