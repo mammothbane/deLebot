@@ -45,13 +45,11 @@ class ApiSpider(CrawlSpider):
                 method = LuaMethod()
                 method['name'] = name
                 method['signature'] = self.pretty_print(xMethod.xpath(".//code//text()").extract())
-                docs = self.pretty_print((xMethod.xpath("./td[3]//text()").extract())).split(':')
-                method['docs'] = ''
-                if len(docs) > 1:
-                    for i in range(1, len(docs) - 1):
-                        method['docs'] = method['docs'].join(docs[i])
+                docs = self.pretty_print((xMethod.xpath("./td[3]//text()").extract()))
+                if not docs == "No Description Set":
+                    method['docs'] = docs
                 else:
-                    method['docs'] = docs[0]
+                    method['docs'] = ""
                 lClass['methods'].append(method)
             clist.append(lClass)
 
@@ -60,7 +58,7 @@ class ApiSpider(CrawlSpider):
 
     def pretty_print(self, str):
         if len(str) > 0:
-            return BeautifulSoup(''.join(str)).get_text().strip()
+            return BeautifulSoup(''.join(str).replace("<", "&lt;").replace(">", "&gt;")).get_text().strip()
         else:
             return ""
 
@@ -78,9 +76,18 @@ class ApiSpider(CrawlSpider):
             if not glob:
                 f.write(name + ' = {}\n\n')
             for method in methods:
-                f.write('--[[\n' + method['docs'] + '\nParams: ' + '\n' + ']]\n')
+                sig = self.parseSig(method)
+                f.write('--[[\n' + method['docs'] + '\nParams: ' + ", ".join(map(lambda x: x['type'] + ' ' + x['name'], sig['params'] + " ")) +
+                        '\nReturn type: ' + sig['return'] + '\n]]\n')
                 f.write('function ' + ((name + ":") if not glob else "") + method['name'] + '(' + '' + ')\n')
                 f.write('end\n\n')
 
     def parseSig(self, method):
-        pass
+        sig = method['signature']
+        print sig
+        ret = sig.split(' ')[0]
+        if len(sig.split(' ')[1].split("(")[1].strip(") ")) > 0:
+            params = map(lambda x: {"type": x.strip().split(" ")[0], "name": x.strip(" )").split(" ")[1]}, sig.split("(")[1].split(","))
+        else:
+            params = []
+        return {"params": params, "return": ret}
