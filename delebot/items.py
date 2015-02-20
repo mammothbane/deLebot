@@ -8,11 +8,12 @@
 import scrapy
 
 class LuaClass(scrapy.Item):
-    name = scrapy.Field
-    ancestor = scrapy.Field
-    notes = scrapy.Field
+    name = scrapy.Field()
+    ancestor = scrapy.Field()
+    notes = scrapy.Field()
+    methods = scrapy.Field()
 
 class LuaMethod(scrapy.Item):
-    name = scrapy.Field
-    signature = scrapy.Field
-    docs = scrapy.Field
+    name = scrapy.Field()
+    signature = scrapy.Field()
+    docs = scrapy.Field()
