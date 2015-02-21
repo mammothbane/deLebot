@@ -1,11 +1,13 @@
 from scrapy.contrib.spiders import CrawlSpider
 from delebot.items import LuaClass, LuaMethod
 from bs4 import BeautifulSoup
+from datetime import datetime
 import codecs
 import os
 
 __author__ = 'mammothbane'
 
+build_date = datetime.now()
 
 class ApiSpider(CrawlSpider):
     name = 'api'
@@ -73,13 +75,17 @@ class ApiSpider(CrawlSpider):
     def writeStubFile(self, name, glob, methods):
         fname = 'stubs/'+name+'.lua'
         with codecs.open(fname, 'w+', 'utf-8') as f:
+            f.write('-- generated ' + build_date.strftime('%d %b %Y') +
+                    '\n-- built by deLebot using the documentation available on the Dota 2 scripting wiki\n')
             if not glob:
                 f.write(name + ' = {}\n\n')
             for method in methods:
                 sig = self.parseSig(method)
-                f.write('--[[\n' + method['docs'] + '\nParams: ' + ", ".join(map(lambda x: x['type'] + ' ' + x['name'], sig['params'] + " ")) +
+                f.write('--[[\n' + method['docs'] + ('\nParams: ' +
+                        ", ".join(map(lambda x: x['type'] + ' ' + x['name'], sig['params'])) if len(sig['params']) > 1 else "") +
                         '\nReturn type: ' + sig['return'] + '\n]]\n')
-                f.write('function ' + ((name + ":") if not glob else "") + method['name'] + '(' + '' + ')\n')
+                f.write('function ' + ((name + ":") if not glob else "") + method['name'] + '(' +
+                        ", ".join(map(lambda x: x['name'], sig['params'])) + ')\n')
                 f.write('end\n\n')
 
     def parseSig(self, method):
