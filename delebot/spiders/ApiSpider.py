@@ -1,9 +1,13 @@
-from scrapy.contrib.spiders import CrawlSpider
-from delebot.items import LuaClass, LuaMethod
-from bs4 import BeautifulSoup
 from datetime import datetime
 import codecs
 import os
+
+from scrapy.contrib.spiders import CrawlSpider
+from bs4 import BeautifulSoup
+
+from delebot.items import LuaClass, LuaMethod
+import delebot
+
 
 __author__ = 'mammothbane'
 
@@ -12,7 +16,7 @@ build_date = datetime.now()
 class ApiSpider(CrawlSpider):
     name = 'api'
     allowed_domains = ['developer.valvesoftware.com']
-    start_urls = ['https://developer.valvesoftware.com/wiki/Dota_2_Workshop_Tools/Scripting/API']
+    start_urls = [delebot.target_page]
 
     def parse(self, response):
         classes = response.xpath("//table[@class='standard-table']")
