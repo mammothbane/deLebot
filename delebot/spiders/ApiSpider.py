@@ -1,17 +1,32 @@
+__author__ = 'mammothbane'
 from datetime import datetime
 import codecs
 import os
+import hashlib
+import logging
 
+import requests
 from scrapy.contrib.spiders import CrawlSpider
 from bs4 import BeautifulSoup
 
-from delebot.items import LuaClass, LuaMethod
 import delebot
+from delebot.items import LuaClass, LuaMethod
 
-
-__author__ = 'mammothbane'
 
 build_date = datetime.now()
+HASHFILE = 'log/hash.txt'
+
+if not os.path.exists('log'):
+    os.makedirs('log')
+
+logging.basicConfig(filename='log/spider.log', level=logging.INFO)
+
+with open(HASHFILE, 'w+') as f:
+    vhash = hashlib.md5(requests.get(delebot.target_page).text.encode('utf-8')).hexdigest()
+    if f.read() != vhash:
+        logging.info("valve source changed " + datetime.now().strftime("%I:%M:%S %m/%d/%Y"))
+        f.write(vhash)
+
 
 class ApiSpider(CrawlSpider):
     name = 'api'
@@ -62,7 +77,8 @@ class ApiSpider(CrawlSpider):
         self.construct_stubs(clist)
         return clist
 
-    def pretty_print(self, str):
+    @staticmethod
+    def pretty_print(str):
         if len(str) > 0:
             return BeautifulSoup(''.join(str).replace("<", "&lt;").replace(">", "&gt;")).get_text().strip()
         else:
@@ -72,11 +88,11 @@ class ApiSpider(CrawlSpider):
         if not os.path.exists("stubs"):
             os.makedirs("stubs")
         for lClass in list:
-            self.writeStubFile(lClass['name'], lClass['glob'], lClass['methods'])
+            self.write_stub_file(lClass['name'], lClass['glob'], lClass['methods'])
             if lClass['glob'] and lClass['glob_accessor'] != "":
-                self.writeStubFile(lClass['glob_accessor'], False, lClass['methods'])
+                self.write_stub_file(lClass['glob_accessor'], False, lClass['methods'])
 
-    def writeStubFile(self, name, glob, methods):
+    def write_stub_file(self, name, glob, methods):
         fname = 'stubs/'+name+'.lua'
         with codecs.open(fname, 'w+', 'utf-8') as f:
             f.write('-- generated ' + build_date.strftime('%d %b %Y') +
@@ -84,7 +100,7 @@ class ApiSpider(CrawlSpider):
             if not glob:
                 f.write(name + ' = {}\n\n')
             for method in methods:
-                sig = self.parseSig(method)
+                sig = self.parse_sig(method)
                 f.write('--[[\n' + method['docs'] + ('\nParams: ' +
                         ", ".join(map(lambda x: x['type'] + ' ' + x['name'], sig['params'])) if len(sig['params']) > 1 else "") +
                         '\nReturn type: ' + sig['return'] + '\n]]\n')
@@ -92,7 +108,8 @@ class ApiSpider(CrawlSpider):
                         ", ".join(map(lambda x: x['name'], sig['params'])) + ')\n')
                 f.write('end\n\n')
 
-    def parseSig(self, method):
+    @staticmethod
+    def parse_sig(method):
         sig = method['signature']
         print sig
         ret = sig.split(' ')[0]

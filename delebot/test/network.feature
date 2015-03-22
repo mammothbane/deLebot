@@ -6,4 +6,6 @@ Feature: Download source from Valve
   Scenario: GET Request
     When we send a GET to the server
     Then we should receive a 200 ok
+    And the body should be at least 2k characters
     And the response should be html
+

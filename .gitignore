@@ -58,3 +58,5 @@ target/
 
 # generated stubs
 stubs/
+
+log

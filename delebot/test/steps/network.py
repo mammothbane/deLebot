@@ -27,3 +27,11 @@ def step_impl(context):
     :type context behave.runner.Context
     """
     assert "text/html" in context.r.headers['content-type']
+
+
+@step("the body should be at least 2k characters")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    assert len(context.r.text) >= 2000
